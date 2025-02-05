@@ -1,5 +1,5 @@
 # Astro AI app
 
-streamlit run client.py
-python server.py
+`streamlit run client.py`
 
+`python server.py`
