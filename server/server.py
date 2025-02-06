@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -23,7 +25,7 @@ app.add_middleware(
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL_NAME = "deepseek-r1:1.5b"
+MODEL_NAME = "qwen:latest"
 
 class PromptRequest(BaseModel):
     prompt: str
