@@ -40,25 +40,26 @@ if prompt := st.chat_input("Ask me about your stars..."):
         st.write(prompt)
 
     # API call handling
+    with st.spinner("Consulting the stars..."):
+        try:
+            response = requests.post(
+                "http://localhost:8000/generate",
+                json={
+                    "prompt": prompt,
+                    "session_id": st.session_state.session_id
+                },
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                timeout=300  # 5 minutes
+            )
+            response.raise_for_status()
+            result = response.json().get("response", "Error: Invalid response format")
+        except Exception as e:
+            result = f"Celestial connection failed: {str(e)}"
+    
+    # Display assistant response
     with st.chat_message("assistant"):
-        with st.spinner("Consulting the stars..."):
-            try:
-                response = requests.post(
-                    "http://localhost:8000/generate",
-                    json={
-                        "prompt": prompt,
-                        "session_id": st.session_state.session_id
-                    },
-                    headers={
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    timeout=300  # 5 minutes
-                )
-                response.raise_for_status()
-                result = response.json().get("response", "Error: Invalid response format")
-            except Exception as e:
-                result = f"Celestial connection failed: {str(e)}"
-        
         st.write(result)
-        st.session_state.messages.append({"role": "assistant", "content": result})
+    st.session_state.messages.append({"role": "assistant", "content": result})
