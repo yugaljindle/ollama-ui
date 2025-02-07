@@ -24,7 +24,7 @@ app.add_middleware(
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL_NAME = "qwen:latest"
+MODEL_NAME = "deepseek-r1:1.5b"
 
 class PromptRequest(BaseModel):
     prompt: str

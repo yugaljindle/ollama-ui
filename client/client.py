@@ -30,14 +30,14 @@ if "messages" not in st.session_state:
 # Display chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+        st.text(msg["content"])
 
 # Chat input and processing
 if prompt := st.chat_input("Ask me about your stars..."):
     # User message handling
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.write(prompt)
+        st.text(prompt)
 
     # API call handling
     with st.spinner("Consulting the stars..."):
@@ -61,5 +61,5 @@ if prompt := st.chat_input("Ask me about your stars..."):
     
     # Display assistant response
     with st.chat_message("assistant"):
-        st.write(result)
+        st.text(result)
     st.session_state.messages.append({"role": "assistant", "content": result})
