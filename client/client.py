@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # ======================
-# UI SETUP
+# SETUP
 # ======================
 st.set_page_config(
     page_title="Astro AI",
@@ -26,14 +26,14 @@ if "messages" not in st.session_state:
 # Display chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        st.write(msg["content"])
 
 # Chat input and processing
 if prompt := st.chat_input("Ask me about your stars..."):
     # User message handling
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.write(prompt)
 
     # API call handling
     with st.chat_message("assistant"):
@@ -53,5 +53,5 @@ if prompt := st.chat_input("Ask me about your stars..."):
             except Exception as e:
                 result = f"Celestial connection failed: {str(e)}"
         
-        st.markdown(result)
+        st.write(result)
         st.session_state.messages.append({"role": "assistant", "content": result})
