@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from uuid import uuid4
 
 # ======================
 # SETUP
@@ -10,6 +11,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
     layout="centered"
 )
+
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid4())
 
 # Centered Title
 col1, col2, col3 = st.columns([1, 2, 1])
@@ -41,7 +45,10 @@ if prompt := st.chat_input("Ask me about your stars..."):
             try:
                 response = requests.post(
                     "http://localhost:8000/generate",
-                    json={"prompt": prompt},
+                    json={
+                        "prompt": prompt,
+                        "session_id": st.session_state.session_id
+                    },
                     headers={
                         "Content-Type": "application/json",
                         "Accept": "application/json"

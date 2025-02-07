@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
-from typing import Optional
+from typing import Dict, List
 import logging
 
 # Setup logging
@@ -28,32 +28,31 @@ MODEL_NAME = "qwen:latest"
 
 class PromptRequest(BaseModel):
     prompt: str
-    model_name: Optional[str] = None
+    session_id: str
 
 class GenerationResponse(BaseModel):
     response: str
 
-messages = []
+message_sessions: Dict[str, List[dict]] = {}
 
 @app.post("/generate", response_model=GenerationResponse)
 async def generate_response(request: PromptRequest):
     try:
-        # Use specified model or fall back to default
-        model = request.model_name or MODEL_NAME
+        # Initialize message history for new sessions
+        if request.session_id not in message_sessions:
+            message_sessions[request.session_id] = []
 
-        # Add the new prompt as a user message
-        messages.append(
+        message_sessions[request.session_id].append(
             {"role": "user", "content": request.prompt}
         )
 
-        # Prepare the request to Ollama
         ollama_request = {
-            "model": model,
-            "messages": messages,
-            "stream": False  # We'll use non-streaming for simplicity
+            "model": MODEL_NAME,
+            "messages": message_sessions[request.session_id],
+            "stream": False  # Using non-streaming for simplicity
         }
         
-        logger.info(f"Sending request to Ollama with model: {model}")
+        logger.info(f"Sending request to Ollama with model: {MODEL_NAME}")
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -78,8 +77,8 @@ async def generate_response(request: PromptRequest):
                     detail="No response generated"
                 )
             
-            # Add the assistant's response to the message history
-            messages.append({"role": "assistant", "content": generated_text})
+            # Add the assistant's response to the session-specific message history
+            message_sessions[request.session_id].append({"role": "assistant", "content": generated_text})
 
             return GenerationResponse(response=generated_text)
             
