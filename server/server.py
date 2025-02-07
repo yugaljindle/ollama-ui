@@ -11,7 +11,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
 app = FastAPI(title="Astro AI Server")
 
 # Add CORS middleware
@@ -34,16 +33,23 @@ class PromptRequest(BaseModel):
 class GenerationResponse(BaseModel):
     response: str
 
+messages = []
+
 @app.post("/generate", response_model=GenerationResponse)
 async def generate_response(request: PromptRequest):
     try:
         # Use specified model or fall back to default
         model = request.model_name or MODEL_NAME
-        
+
+        # Add the new prompt as a user message
+        messages.append(
+            {"role": "user", "content": request.prompt}
+        )
+
         # Prepare the request to Ollama
         ollama_request = {
             "model": model,
-            "prompt": request.prompt,
+            "messages": messages,
             "stream": False  # We'll use non-streaming for simplicity
         }
         
@@ -51,9 +57,9 @@ async def generate_response(request: PromptRequest):
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
+                f"{OLLAMA_BASE_URL}/api/chat",
                 json=ollama_request,
-                timeout=30.0
+                timeout=300  # 5 minutes
             )
             
             if response.status_code != 200:
@@ -64,7 +70,7 @@ async def generate_response(request: PromptRequest):
             
             # Extract the response from Ollama
             result = response.json()
-            generated_text = result.get("response", "")
+            generated_text = result.get("message", {}).get("content", "")
             
             if not generated_text:
                 raise HTTPException(
@@ -72,6 +78,9 @@ async def generate_response(request: PromptRequest):
                     detail="No response generated"
                 )
             
+            # Add the assistant's response to the message history
+            messages.append({"role": "assistant", "content": generated_text})
+
             return GenerationResponse(response=generated_text)
             
     except httpx.TimeoutException:
@@ -85,10 +94,6 @@ async def generate_response(request: PromptRequest):
             status_code=500,
             detail=f"Error generating response: {str(e)}"
         )
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn

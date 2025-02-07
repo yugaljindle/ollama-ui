@@ -42,6 +42,10 @@ if prompt := st.chat_input("Ask me about your stars..."):
                 response = requests.post(
                     "http://localhost:8000/generate",
                     json={"prompt": prompt},
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
                     timeout=300  # 5 minutes
                 )
                 response.raise_for_status()
