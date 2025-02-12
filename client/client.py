@@ -1,13 +1,25 @@
-import streamlit as st
+#!/usr/bin/env python3
+
 import requests
+import configparser
+import streamlit as st
 from uuid import uuid4
+
+config = configparser.ConfigParser()
+config.read('../config.ini')
+
+APP_NAME = config["common"]["app_name"]
+APP_ICON = config["common"]["app_icon"]
+CHAT_PLACEHOLDER = config["client"]["chat_input_placeholder"]
+WAITING_TEXT = config["client"]["waiting_text"]
+SERVER_PORT = config["server"]["port"]
 
 # ======================
 # SETUP
 # ======================
 st.set_page_config(
-    page_title="Astro AI",
-    page_icon="🔆",
+    page_title=APP_NAME,
+    page_icon=APP_ICON,
     initial_sidebar_state="collapsed",
     layout="centered"
 )
@@ -18,7 +30,7 @@ if "session_id" not in st.session_state:
 # Centered Title
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.title("🔆 Astro AI")
+    st.title(f"{APP_ICON} {APP_NAME}")
 
 # ======================
 # CORE LOGIC
@@ -33,17 +45,17 @@ for msg in st.session_state.messages:
         st.text(msg["content"])
 
 # Chat input and processing
-if prompt := st.chat_input("Ask me about your stars..."):
+if prompt := st.chat_input(CHAT_PLACEHOLDER):
     # User message handling
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.text(prompt)
 
     # API call handling
-    with st.spinner("Consulting the stars..."):
+    with st.spinner(WAITING_TEXT):
         try:
             response = requests.post(
-                "http://localhost:8000/generate",
+                f"http://localhost:{SERVER_PORT}/generate",
                 json={
                     "prompt": prompt,
                     "session_id": st.session_state.session_id
@@ -57,8 +69,8 @@ if prompt := st.chat_input("Ask me about your stars..."):
             response.raise_for_status()
             result = response.json().get("response", "Error: Invalid response format")
         except Exception as e:
-            result = f"Celestial connection failed: {str(e)}"
-    
+            result = f"Connection failed: {str(e)}"
+
     # Display assistant response
     with st.chat_message("assistant"):
         st.text(result)
